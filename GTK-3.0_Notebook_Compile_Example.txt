@@ -13,7 +13,7 @@ pkg-config --libs gtk+-3.0
 编译程序的例子:
 gcc gtk-notebook.c -o gtk-notebook `pkg-config --cflags gtk+-3.0` `pkg-config --libs gtk+-3.0`
 
-以下是gtk-notebook (Tab) 的例子:
+以下是gtk-notebook (Tab) 的例子:原始网址 http://www.myexception.cn/other/1976568.html
 #include <gtk/gtk.h>
 
 
