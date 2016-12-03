@@ -1,0 +1,26 @@
+0. 安装依赖
+sudo pip install -U pip setuptools
+sudo pip install -i http://pypi.douban.com/simple/ --trusted-host pypi.douban.com -U rqalpha
+sudo pip install TA-Lib
+
+1. 编译
+sudo ./setup.py build
+
+2. 安装到系统
+sudo ./setup.py install
+也可以
+sudo pip install -e .
+
+3. 用法
+下载日线数据(失败出错多实验几次)
+rqalpha update_bundle
+
+生成example目录(实际就是rqalpha/examples目录下的内容拿过来)
+rqalpha examples
+
+运行一个策略(具体参数看代码内的cmd options即可), 运行结束会给出策略的运行结果
+rqalpha run -f examples/multi_rsi.py -s 2014-01-01 -e 2016-10-10 --plot -o multi_rsi_result.pkl
+
+加载之前的策略运行结果(run命令通过-o保存的result.pkl)
+rqalpha plot multi_rsi_result.pkl
+
