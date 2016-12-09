@@ -1,0 +1,48 @@
+0. 源码版本 和 名词解释
+
+cm android-6.0.1_r52
+--- system/bt
+--- packages/apps/Bluetooth
+
+AG - audio gateway - 音频网关
+HF - hands free - 耳机/免提端
+-> - 函数直接/间接调用
+
+1. 原理
+
+-- HFP 1.6 协议
+---- 4.2 Service Level Connection Establishment
+---- 4.2.2 Link Loss Recovery
+
+意思就是说，非显示的链接断开，都可以自动回连，就是说HFP的service level Connection Establishment，也就是hfp服务级别的链接
+的建立，是回连的标志，HF发起，AG响应，同时AG实际需要判断是不是应该发起A2DP的链接，也就是A2DP的链接，总是AG主动的
+
+2. HF端发起
+按照4.2 Service Level Connection Establishment流程发起链接即可
+先创建acl如果需要的话，sdp搜索对端hfp，建立rfcomm通道，协议AT交互
+
+3. AG端处理
+(1) btif_*.c 是android蓝牙协议和andorid蓝牙服务之间的桥梁，任何交互都经过这些文件的处理。btif_hf.c是HFP的接口文件。
+
+(2) btif_hf.c中的btif_hf_get_interface结构包含了btif_hf.c给上层提供的接口，其中的init是初始化，init中，上层传递给btif_hf.c一个回调函数集合
+方便btif_hf.c给上层返回状态
+
+bt_hf_callbacks = callbacks;
+
+(3) BTA_AgEnable (BTA_AG_PARSE, bte_hf_evt);其中bte_hf_evt是btif_hf.c和bta之间的接口，就是下层事件通过bte_hf_evt回调到btif_hf.c
+
+(4) bte_hf_evt -> btif_hf_upstreams_evt
+
+(5) btif_hf_upstreams_evt : BTA_AG_OPEN_EVT
+BTHF_CONNECTION_STATE_CONNECTED通过bt_hf_callbacks->connection_state_cb这样的过程向btif_hf.c的更上一个级别传递这个connected状态
+
+(6) btif_hf.c的上层是com_android_bluetooth_hfp.cpp, com_android_bluetooth_hfp.cpp的上层是HeadsetStateMachine.java
+connection_state_callback -> method_onConnectionStateChanged -> onConnectionStateChanged(HeadsetStateMachine.java) -> 
+EVENT_TYPE_CONNECTION_STATE_CHANGED -> processConnectionEvent -> HeadsetHalConstants.CONNECTION_STATE_CONNECTED (disconnected state) ->
+broadcastConnectionState -> mService.notifyProfileConnectionStateChanged(device, BluetoothProfile.HEADSET, newState, prevState); ->
+HeadsetSercie/ProfileServie.notifyProfileConnectionStateChanged -> mAdapterService.onProfileConnectionStateChanged(device, profileId, newState, prevState); ->
+AdapterService.onProfileConnectionStateChanged -> MESSAGE_PROFILE_CONNECTION_STATE_CHANGED -> processProfileStateChanged ->
+connectOtherProfile -> MESSAGE_CONNECT_OTHER_PROFILES -> processConnectOtherProfiles
+
+最终，processConnectOtherProfiles接口，会根据配置情况，选择是否链接a2dp等other profile！
+
