@@ -1,0 +1,4 @@
+1. 板子收发后，出现Disconnected，链接断开了
+链接参数跟是timer控制的，需要缩短timer的时间，实现链接快速更新
+(peripheral.c, osal_start_timerEx( gapRole_TaskID, START_CONN_UPDATE_EVT, timeout*1000 ); 是启动timer， TGAP_CONN_PAUSE_PERIPHERAL是timeout的值)
+(TGAP_CONN_PAUSE_PERIPHERAL 是 simpleBLEPeripheral.c配置的，值是DEFAULT_ENABLE_UPDATE_REQUEST,默认是6,单位是秒，改成2可以很快)
